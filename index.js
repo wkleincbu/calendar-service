@@ -1,16 +1,7 @@
 const express = require('express');
 const app = express();
 
-app.get('/ics', (req, res) => {
-
-  const eventId = req.query.id;
-
-  if (!eventId) {
-    return res.status(400).send('Missing event id');
-  }
-
-  const start = "20260610T160000Z";
-  const end = "20260610T170000Z";
+/* ---------------- HOME ROUTE ---------------- */
 
 app.get('/', (req, res) => {
   res.send(`
@@ -23,6 +14,20 @@ app.get('/', (req, res) => {
     </ul>
   `);
 });
+
+
+/* ---------------- ICS ROUTE ---------------- */
+
+app.get('/ics', (req, res) => {
+
+  const eventId = req.query.id;
+
+  if (!eventId) {
+    return res.status(400).send('Missing event id');
+  }
+
+  const start = "20260610T160000Z";
+  const end = "20260610T170000Z";
 
   const ics =
 `BEGIN:VCALENDAR
@@ -43,21 +48,15 @@ END:VCALENDAR`;
   res.send(ics);
 });
 
-const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
-});
+/* ---------------- GOOGLE ROUTE ---------------- */
 
 app.get('/google', (req, res) => {
-
-  const id = req.query.id;
 
   const title = encodeURIComponent("Campus Visit");
   const details = encodeURIComponent("Admissions Tour");
   const location = encodeURIComponent("California Baptist University");
 
-  // Example fixed dates (we’ll connect Salesforce later)
   const start = "20260610T160000Z";
   const end = "20260610T170000Z";
 
@@ -71,9 +70,10 @@ app.get('/google', (req, res) => {
   res.redirect(url);
 });
 
-app.get('/outlook', (req, res) => {
 
-  const id = req.query.id;
+/* ---------------- OUTLOOK ROUTE ---------------- */
+
+app.get('/outlook', (req, res) => {
 
   const title = encodeURIComponent("Campus Visit");
   const location = encodeURIComponent("California Baptist University");
@@ -89,4 +89,13 @@ app.get('/outlook', (req, res) => {
 &location=${location}`;
 
   res.redirect(url);
+});
+
+
+/* ---------------- START SERVER (LAST) ---------------- */
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log("Server running on port " + PORT);
 });
