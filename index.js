@@ -36,3 +36,45 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server running on port " + PORT);
 });
+
+app.get('/google', (req, res) => {
+
+  const id = req.query.id;
+
+  const title = encodeURIComponent("Campus Visit");
+  const details = encodeURIComponent("Admissions Tour");
+  const location = encodeURIComponent("California Baptist University");
+
+  // Example fixed dates (we’ll connect Salesforce later)
+  const start = "20260610T160000Z";
+  const end = "20260610T170000Z";
+
+  const url =
+`https://calendar.google.com/calendar/render?action=TEMPLATE
+&text=${title}
+&dates=${start}/${end}
+&details=${details}
+&location=${location}`;
+
+  res.redirect(url);
+});
+
+app.get('/outlook', (req, res) => {
+
+  const id = req.query.id;
+
+  const title = encodeURIComponent("Campus Visit");
+  const location = encodeURIComponent("California Baptist University");
+
+  const start = "20260610T160000Z";
+  const end = "20260610T170000Z";
+
+  const url =
+`https://outlook.live.com/calendar/0/deeplink/compose
+?subject=${title}
+&startdt=2026-06-10T16:00:00Z
+&enddt=2026-06-10T17:00:00Z
+&location=${location}`;
+
+  res.redirect(url);
+});
