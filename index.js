@@ -12,6 +12,18 @@ app.get('/ics', (req, res) => {
   const start = "20260610T160000Z";
   const end = "20260610T170000Z";
 
+app.get('/', (req, res) => {
+  res.send(`
+    <h2>Calendar Service is Running</h2>
+    <p>Use one of the endpoints:</p>
+    <ul>
+      <li>/ics?id=123</li>
+      <li>/google?id=123</li>
+      <li>/outlook?id=123</li>
+    </ul>
+  `);
+});
+
   const ics =
 `BEGIN:VCALENDAR
 VERSION:2.0
