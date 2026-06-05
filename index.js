@@ -78,15 +78,15 @@ app.get('/outlook', (req, res) => {
   const title = encodeURIComponent("Campus Visit");
   const location = encodeURIComponent("California Baptist University");
 
-  const start = "20260610T160000Z";
-  const end = "20260610T170000Z";
+  const startdt = "2026-06-10T16:00:00Z";
+  const enddt = "2026-06-10T17:00:00Z";
 
   const url =
-`https://outlook.live.com/calendar/0/deeplink/compose
-?subject=${title}
-&startdt=2026-06-10T16:00:00Z
-&enddt=2026-06-10T17:00:00Z
-&location=${location}`;
+    "https://outlook.live.com/calendar/0/deeplink/compose" +
+    "?subject=" + title +
+    "&startdt=" + startdt +
+    "&enddt=" + enddt +
+    "&location=" + location;
 
   res.redirect(url);
 });
