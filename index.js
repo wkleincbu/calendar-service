@@ -67,7 +67,7 @@ app.get('/google', (req, res) => {
     "&details=" + details +
     "&location=" + location;
 
-  res.send(url);
+  res.redirect(url);
 
 });
 
