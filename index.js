@@ -57,8 +57,15 @@ app.get('/google', (req, res) => {
   const details = encodeURIComponent("Admissions Tour");
   const location = encodeURIComponent("California Baptist University");
 
-  const start = "20260610T160000Z";
-  const end = "20260610T170000Z";
+  const startRaw = req.query.start;
+  const endRaw = req.query.end;
+
+  if (!startRaw || !endRaw) {
+    return res.status(400).send("Missing start or end date");
+  }
+
+  const start = new Date(startRaw).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const end = new Date(endRaw).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 
   const url =
     "https://calendar.google.com/calendar/render?action=TEMPLATE" +
@@ -68,7 +75,6 @@ app.get('/google', (req, res) => {
     "&location=" + location;
 
   res.redirect(url);
-
 });
 
 
