@@ -61,13 +61,14 @@ app.get('/google', (req, res) => {
   const end = "20260610T170000Z";
 
   const url =
-`https://calendar.google.com/calendar/render?action=TEMPLATE
-&text=${title}
-&dates=${start}/${end}
-&details=${details}
-&location=${location}`;
+    "https://calendar.google.com/calendar/render?action=TEMPLATE" +
+    "&text=" + title +
+    "&dates=" + start + "/" + end +
+    "&details=" + details +
+    "&location=" + location;
 
-  res.redirect(url);
+  res.send(url);
+
 });
 
 
