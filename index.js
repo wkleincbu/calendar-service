@@ -51,28 +51,25 @@ END:VCALENDAR`;
 
 /* ---------------- GOOGLE ROUTE ---------------- */
 
-app.get('/google', (req, res) => {
+app.get('/google', async (req, res) => {
 
-  const title = encodeURIComponent("Campus Visit");
-  const details = encodeURIComponent("Admissions Tour");
-  const location = encodeURIComponent("California Baptist University");
+  const eventId = req.query.id;
 
-  const startRaw = req.query.start;
-  const endRaw = req.query.end;
-
-  if (!startRaw || !endRaw) {
-    return res.status(400).send("Missing start or end date");
+  if (!eventId) {
+    return res.status(400).send("Missing Event Id");
   }
 
-  const start = new Date(startRaw).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-  const end = new Date(endRaw).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const evt = await getEventFromSalesforce(eventId); // (query Salesforce)
+
+  const start = toGoogleDate(evt.Start_Date_Time__c);
+  const end = toGoogleDate(evt.End_Date_Time__c);
 
   const url =
     "https://calendar.google.com/calendar/render?action=TEMPLATE" +
-    "&text=" + title +
+    "&text=" + encodeURIComponent(evt.Name) +
     "&dates=" + start + "/" + end +
-    "&details=" + details +
-    "&location=" + location;
+    "&details=" + encodeURIComponent(evt.Description || "") +
+    "&location=" + encodeURIComponent(evt.Location || "");
 
   res.redirect(url);
 });
