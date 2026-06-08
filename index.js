@@ -1,45 +1,115 @@
 const express = require('express');
 const app = express();
 
-/* ---------------- HOME ROUTE ---------------- */
+/**
+ * -----------------------------
+ * Helpers (date formatting)
+ * -----------------------------
+ */
 
+// Converts Salesforce/ISO date into Google Calendar format: YYYYMMDDTHHmmssZ
+function toGoogleDate(date) {
+  if (!date) return null;
+  return new Date(date)
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .split('.')[0] + 'Z';
+}
+
+/**
+ * -----------------------------
+ * MOCK EVENT FETCHER
+ * -----------------------------
+ * Replace this with real Salesforce query later
+ */
+async function getEvent(eventId) {
+  // TEMP: replace with real Salesforce API / SOQL call
+  return {
+    id: eventId,
+    name: "Campus Visit",
+    description: "Admissions Tour",
+    location: "California Baptist University",
+    start: "2026-06-10T16:00:00Z",
+    end: "2026-06-10T17:00:00Z"
+  };
+}
+
+/**
+ * -----------------------------
+ * HOME ROUTE (health check)
+ * -----------------------------
+ */
 app.get('/', (req, res) => {
   res.send(`
-    <h2>Calendar Service is Running</h2>
-    <p>Use one of the endpoints:</p>
+    <h2>Calendar Service Running</h2>
     <ul>
-      <li>/ics?id=123</li>
-      <li>/google?id=123</li>
-      <li>/outlook?id=123</li>
+      <li>/event/:id/google</li>
+      <li>/event/:id/ics</li>
+      <li>/event/:id/outlook</li>
     </ul>
   `);
 });
 
-
-/* ---------------- ICS ROUTE ---------------- */
-
-app.get('/ics', (req, res) => {
-
-  const eventId = req.query.id;
+/**
+ * -----------------------------
+ * GOOGLE CALENDAR
+ * -----------------------------
+ */
+app.get('/event/:id/google', async (req, res) => {
+  const eventId = req.params.id;
 
   if (!eventId) {
-    return res.status(400).send('Missing event id');
+    return res.status(400).send("Missing Event ID");
   }
 
-  const start = "20260610T160000Z";
-  const end = "20260610T170000Z";
+  const event = await getEvent(eventId);
+
+  const start = toGoogleDate(event.start);
+  const end = toGoogleDate(event.end);
+
+  if (!start || !end) {
+    return res.status(400).send("Missing Event Dates");
+  }
+
+  const url =
+    "https://calendar.google.com/calendar/render?action=TEMPLATE" +
+    "&text=" + encodeURIComponent(event.name) +
+    "&dates=" + start + "/" + end +
+    "&details=" + encodeURIComponent(event.description || "") +
+    "&location=" + encodeURIComponent(event.location || "");
+
+  res.redirect(url);
+});
+
+/**
+ * -----------------------------
+ * ICS (Apple + Outlook)
+ * -----------------------------
+ */
+app.get('/event/:id/ics', async (req, res) => {
+  const eventId = req.params.id;
+
+  if (!eventId) {
+    return res.status(400).send("Missing Event ID");
+  }
+
+  const event = await getEvent(eventId);
+
+  const start = toGoogleDate(event.start);
+  const end = toGoogleDate(event.end);
 
   const ics =
 `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Calendar Service//EN
 BEGIN:VEVENT
-UID:${eventId}@calendar
+UID:${event.id}@calendar
 DTSTAMP:${new Date().toISOString().replace(/[-:]/g,'').split('.')[0]}Z
 DTSTART:${start}
 DTEND:${end}
-SUMMARY:Test Event ${eventId}
-LOCATION:CBU
+SUMMARY:${event.name}
+DESCRIPTION:${event.description || ""}
+LOCATION:${event.location || ""}
 END:VEVENT
 END:VCALENDAR`;
 
@@ -48,58 +118,23 @@ END:VCALENDAR`;
   res.send(ics);
 });
 
-
-/* ---------------- GOOGLE ROUTE ---------------- */
-
-app.get('/google', async (req, res) => {
-
-  const eventId = req.query.id;
-
-  if (!eventId) {
-    return res.status(400).send("Missing Event Id");
-  }
-
-  const evt = await getEventFromSalesforce(eventId); // (query Salesforce)
-
-  const start = toGoogleDate(evt.Start_Date_Time__c);
-  const end = toGoogleDate(evt.End_Date_Time__c);
-
-  const url =
-    "https://calendar.google.com/calendar/render?action=TEMPLATE" +
-    "&text=" + encodeURIComponent(evt.Name) +
-    "&dates=" + start + "/" + end +
-    "&details=" + encodeURIComponent(evt.Description || "") +
-    "&location=" + encodeURIComponent(evt.Location || "");
-
-  res.redirect(url);
+/**
+ * -----------------------------
+ * OUTLOOK (uses ICS download)
+ * -----------------------------
+ */
+app.get('/event/:id/outlook', async (req, res) => {
+  // Outlook handles ICS better than deep links in most cases
+  return res.redirect(`/event/${req.params.id}/ics`);
 });
 
-
-/* ---------------- OUTLOOK ROUTE ---------------- */
-
-app.get('/outlook', (req, res) => {
-
-  const title = encodeURIComponent("Campus Visit");
-  const location = encodeURIComponent("California Baptist University");
-
-  const startdt = "2026-06-10T16:00:00Z";
-  const enddt = "2026-06-10T17:00:00Z";
-
-  const url =
-    "https://outlook.live.com/calendar/0/deeplink/compose" +
-    "?subject=" + title +
-    "&startdt=" + startdt +
-    "&enddt=" + enddt +
-    "&location=" + location;
-
-  res.redirect(url);
-});
-
-
-/* ---------------- START SERVER (LAST) ---------------- */
-
+/**
+ * -----------------------------
+ * START SERVER
+ * -----------------------------
+ */
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+  console.log("Calendar service running on port " + PORT);
 });
